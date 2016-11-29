@@ -103,7 +103,7 @@ module.exports = yeoman.Base.extend({
           path: basePath,
         },
         base: 'Model',
-        facetName: 'server', // hard-coded for now
+        facetName: 'common', // hard-coded for now
         properties: {},
       };
       api.modelDefinition = modelDef;
@@ -131,7 +131,7 @@ module.exports = yeoman.Base.extend({
           name: model.name,
           plural: model.plural,
           base: model.base || 'PersistedModel',
-          facetName: 'server', // hard-coded for now
+          facetName: 'common', // hard-coded for now
           properties: model.properties,
         });
         self.modelConfigs.push({
@@ -318,12 +318,24 @@ module.exports = yeoman.Base.extend({
     function generateRemoteMethods(self, cb) {
       var apis = self.apis;
       async.eachSeries(apis, function(api, done) {
-        var modelDef = api.modelDefinition;
-        if (!modelDef) {
-          return done();
-        }
-        self.log(chalk.green(g.f('Generating %s', modelDef.scriptPath)));
-        fs.writeFile(modelDef.scriptPath, api.code, done);
+        async.forEachOf(api.code, function (code, m, done) {
+          if (self.selectedModels[m] !== SELECTED_FOR_UPDATE &&
+            self.selectedModels[m] !== SELECTED_FOR_CREATE) {
+            return done();
+          }
+          var modelDef = api.modelDefinition;
+          for (var i = 0, n = self.modelDefs.length; i < n; i++) {
+            if (m === self.modelDefs[i].name) {
+              modelDef = self.modelDefs[i];
+              break;
+            }
+          }
+          if (!modelDef) {
+            return done();
+          }
+          self.log(chalk.green(g.f('Generating %s', modelDef.scriptPath)));
+          fs.writeFile(modelDef.scriptPath, code, done);
+        }, done);
       }, cb);
     }
 
