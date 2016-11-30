@@ -144,6 +144,7 @@ function generate(specUrl, log, cb) {
         return cb(err);
       }
       async.each(apiSpecs, function(apiSpec, done) {
+        generator.getGenerator(apiSpec).mapTagsToModels(apiSpec);
         var models = generator.generateModels(apiSpec);
         var code = generator.generateRemoteMethods(apiSpec,
           {modelName: 'SwaggerApi'});
